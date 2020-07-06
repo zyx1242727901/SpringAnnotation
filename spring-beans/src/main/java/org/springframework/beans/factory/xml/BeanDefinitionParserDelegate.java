@@ -416,11 +416,14 @@ public class BeanDefinitionParserDelegate {
 		String nameAttr = ele.getAttribute(NAME_ATTRIBUTE);
 
 		List<String> aliases = new ArrayList<>();
+		// 将 name 属性的定义按照 “逗号、分号、空格” 切分，形成一个 别名列表数组，
+		// 当然，如果你不定义 name 属性的话，就是空的了
 		if (StringUtils.hasLength(nameAttr)) {
 			String[] nameArr = StringUtils.tokenizeToStringArray(nameAttr, MULTI_VALUE_ATTRIBUTE_DELIMITERS);
 			aliases.addAll(Arrays.asList(nameArr));
 		}
 
+		// 如果没有指定id, 那么用别名列表的第一个名字作为beanName
 		String beanName = id;
 		if (!StringUtils.hasText(beanName) && !aliases.isEmpty()) {
 			beanName = aliases.remove(0);
@@ -434,8 +437,11 @@ public class BeanDefinitionParserDelegate {
 			checkNameUniqueness(beanName, aliases, ele);
 		}
 
+		//根据上述属性创建一个BeanDefinition  重要
 		AbstractBeanDefinition beanDefinition = parseBeanDefinitionElement(ele, beanName, containingBean);
+		//解析完bean标签了，初步形成了一个BeanDefinition
 		if (beanDefinition != null) {
+			// 如果都没有设置 id 和 name，那么此时的 beanName 就会为 null，进入下面这块代码产生
 			if (!StringUtils.hasText(beanName)) {
 				try {
 					if (containingBean != null) {
@@ -512,17 +518,24 @@ public class BeanDefinitionParserDelegate {
 		}
 
 		try {
+			//创建一个beanDefinition并设置类信息，parentName, className, ClassLoader之类的
 			AbstractBeanDefinition bd = createBeanDefinition(className, parent);
-
+			//设置beanDefinition的属性
 			parseBeanDefinitionAttributes(ele, beanName, containingBean, bd);
 			bd.setDescription(DomUtils.getChildElementValueByTagName(ele, DESCRIPTION_ELEMENT));
 
+			/**  =========以下为解析<bean>标签的子标签,并将属性放到BeanDefinition中===========  **/
+			// <meta>
 			parseMetaElements(ele, bd);
+			//  <lookup-method>
 			parseLookupOverrideSubElements(ele, bd.getMethodOverrides());
+			// <replaced-method>
 			parseReplacedMethodSubElements(ele, bd.getMethodOverrides());
-
+			// <constructor-arg />
 			parseConstructorArgElements(ele, bd);
+			// <property />
 			parsePropertyElements(ele, bd);
+			// <qualifier />
 			parseQualifierElements(ele, bd);
 
 			bd.setResource(this.readerContext.getResource());

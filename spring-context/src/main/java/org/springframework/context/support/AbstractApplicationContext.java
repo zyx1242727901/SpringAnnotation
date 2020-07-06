@@ -531,42 +531,44 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 	@Override
 	public void refresh() throws BeansException, IllegalStateException {
+		//先加个锁，防止这边启动着，你悄么声的给销毁了啥的
 		synchronized (this.startupShutdownMonitor) {
-			// Prepare this context for refreshing.
+			//准备工作，初始化属性，记录启动时间，标记已启动状态
 			prepareRefresh();
 
-			// Tell the subclass to refresh the internal bean factory.
+			//创建beanFactory（根据xml将beanName解析为beanDefination注册到生成的beanFactory，其实就是个map）
 			ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
 
-			// Prepare the bean factory for use in this context.
+			//设置beanFactory的类加载器，添加BeanPostProcessor，注册几个特殊的单例bean
 			prepareBeanFactory(beanFactory);
 
 			try {
-				// Allows post-processing of the bean factory in context subclasses.
+				//到此时bean都已经转为了beanDefination，即已完成加载注册，但是还未初始化
+				//模板方法，子类可以自定义对生成的beanDefinition进行后续处理
 				postProcessBeanFactory(beanFactory);
 
-				// Invoke factory processors registered as beans in the context.
+				// 调用bean的postProcessBeanFactory(factory)方法
 				invokeBeanFactoryPostProcessors(beanFactory);
 
-				// Register bean processors that intercept bean creation.
+				// 注册BeanPostProcessors的实现类，里面各种addBeanPostProcessor
 				registerBeanPostProcessors(beanFactory);
 
-				// Initialize message source for this context.
+				// 初始化当前 ApplicationContext 的 MessageSource（没啥用，过）
 				initMessageSource();
 
-				// Initialize event multicaster for this context.
+				// 初始化当前 ApplicationContext 的事件广播器    过
 				initApplicationEventMulticaster();
 
-				// Initialize other special beans in specific context subclasses.
+				// 模板方法，具体的子类可以在这里初始化一些特殊的 Bean（在初始化 singleton beans 之前）.
 				onRefresh();
 
-				// Check for listener beans and register them.
+				// 注册监听器.
 				registerListeners();
 
-				// Instantiate all remaining (non-lazy-init) singletons.
+				// 重点！！！！ 初始化所有singleton bean（lazy-init除外）
 				finishBeanFactoryInitialization(beanFactory);
 
-				// Last step: publish corresponding event.
+				// Last step: 广播ApplicationContext初始化完成.
 				finishRefresh();
 			}
 
@@ -576,7 +578,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 							"cancelling refresh attempt: " + ex);
 				}
 
-				// Destroy already created singletons to avoid dangling resources.
+				// 销毁已经初始化的 singleton 的 Beans，以免有些 bean 会一直占用资源
 				destroyBeans();
 
 				// Reset 'active' flag.
@@ -600,6 +602,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareRefresh() {
 		// Switch to active.
+		// 将 active 属性设置为 true，closed 属性设置为 false，它们都是 AtomicBoolean 类型
 		this.startupDate = System.currentTimeMillis();
 		this.closed.set(false);
 		this.active.set(true);
@@ -618,6 +621,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 
 		// Validate that all properties marked as required are resolvable:
 		// see ConfigurablePropertyResolver#setRequiredProperties
+		//检验配置文件
 		getEnvironment().validateRequiredProperties();
 
 		// Store pre-refresh ApplicationListeners...
@@ -651,7 +655,10 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 * @see #getBeanFactory()
 	 */
 	protected ConfigurableListableBeanFactory obtainFreshBeanFactory() {
+		//创建bean工厂，如果已存在，则关闭并销毁，在创建新的
+		//加载bean定义，注册bean-->beanDefinition
 		refreshBeanFactory();
+		//返回刚创建的beanFactory
 		return getBeanFactory();
 	}
 
@@ -662,6 +669,7 @@ public abstract class AbstractApplicationContext extends DefaultResourceLoader
 	 */
 	protected void prepareBeanFactory(ConfigurableListableBeanFactory beanFactory) {
 		// Tell the internal bean factory to use the context's class loader etc.
+		//设置类加载器
 		beanFactory.setBeanClassLoader(getClassLoader());
 		if (!shouldIgnoreSpel) {
 			beanFactory.setBeanExpressionResolver(new StandardBeanExpressionResolver(beanFactory.getBeanClassLoader()));

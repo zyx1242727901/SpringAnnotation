@@ -119,14 +119,17 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	@Override
 	protected final void refreshBeanFactory() throws BeansException {
-		if (hasBeanFactory()) {
-			destroyBeans();
-			closeBeanFactory();
+		if (hasBeanFactory()) {//如果已存在bean工厂
+			destroyBeans();//销毁
+			closeBeanFactory();//关闭
 		}
 		try {
+			//创建新的bean工厂  DefaultListableBeanFactory(这个beanFactory基本实现了所有的父类，所以初始化这个类的实例)
 			DefaultListableBeanFactory beanFactory = createBeanFactory();
 			beanFactory.setSerializationId(getId());
+			//设置容器启动参数（可覆盖、循环引用），开启注解自动装配
 			customizeBeanFactory(beanFactory);
+			//将beanDefination装入beanFactory（BeanDefinition 中保存了我们的 Bean 信息，比如这个 Bean 指向的是哪个类、是否是单例的、是否懒加载、这个 Bean 依赖了哪些 Bean 等等）
 			loadBeanDefinitions(beanFactory);
 			this.beanFactory = beanFactory;
 		}
@@ -213,9 +216,11 @@ public abstract class AbstractRefreshableApplicationContext extends AbstractAppl
 	 */
 	protected void customizeBeanFactory(DefaultListableBeanFactory beanFactory) {
 		if (this.allowBeanDefinitionOverriding != null) {
+			//是否允许BeanDefinition覆盖  默认为空
 			beanFactory.setAllowBeanDefinitionOverriding(this.allowBeanDefinitionOverriding);
 		}
 		if (this.allowCircularReferences != null) {
+			//是否允许BeanDefinition循环依赖（注意不要构造器依赖）   默认为允许
 			beanFactory.setAllowCircularReferences(this.allowCircularReferences);
 		}
 	}
