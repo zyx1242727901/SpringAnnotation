@@ -1,5 +1,6 @@
 package com.zyx.demo.starter;
 
+import com.zyx.demo.beans.TestBean;
 import com.zyx.demo.config.MyConfig;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -18,6 +19,7 @@ public class TestMain {
 
 	public static void main(String[] args) {
 		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("appContext-common.xml");
-//		TestMain test = (TestMain) context.getBean("test");
+		TestBean test = (TestBean) context.getBean(TestBean.class);
+		MyConfig myConfig = (MyConfig) context.getBean("myConfig");
 	}
 }

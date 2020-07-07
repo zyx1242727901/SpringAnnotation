@@ -1181,7 +1181,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 		}
 
 		if (mbd.getFactoryMethodName() != null) {
-			//采用工厂方法实例化
+			//采用工厂方法实例化，指的是bean标签的fatory-method属性
 			return instantiateUsingFactoryMethod(beanName, mbd, args);
 		}
 
@@ -1208,6 +1208,7 @@ public abstract class AbstractAutowireCapableBeanFactory extends AbstractBeanFac
 			}
 		}
 
+		//第一次创建的话
 		// 判断是否采用了有参构造函数
 		Constructor<?>[] ctors = determineConstructorsFromBeanPostProcessors(beanClass, beanName);
 		if (ctors != null || mbd.getResolvedAutowireMode() == AUTOWIRE_CONSTRUCTOR ||
