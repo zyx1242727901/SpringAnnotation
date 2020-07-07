@@ -1,5 +1,6 @@
-package com.zyx.demo;
+package com.zyx.demo.starter;
 
+import com.zyx.demo.config.MyConfig;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
@@ -16,8 +17,7 @@ public class TestMain {
 	}
 
 	public static void main(String[] args) {
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(TestMain.class);
-		TestMain test = (TestMain) context.getBean("test");
-
+		ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("appContext-common.xml");
+//		TestMain test = (TestMain) context.getBean("test");
 	}
 }

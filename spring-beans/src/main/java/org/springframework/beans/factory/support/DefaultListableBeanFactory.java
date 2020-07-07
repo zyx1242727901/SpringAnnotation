@@ -898,19 +898,24 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 			logger.trace("Pre-instantiating singletons in " + this);
 		}
 
-		// Iterate over a copy to allow for init methods which in turn register new bean definitions.
-		// While this may not be part of the regular factory bootstrap, it does otherwise work fine.
+		// beanDefinitionNames这个list保存了所有的beanName
 		List<String> beanNames = new ArrayList<>(this.beanDefinitionNames);
 
-		// Trigger initialization of all non-lazy singleton beans...
+		// 循环，触发所有的非懒加载的 singleton beans 的初始化操作
 		for (String beanName : beanNames) {
+			//这里是为了合并父bean中的配置，即<bean id="" class="" parent="" /> 中的 parent
 			RootBeanDefinition bd = getMergedLocalBeanDefinition(beanName);
+			//非抽象、是单例、不是懒加载， （如果配置了 'abstract = true'，那是不需要初始化的）
 			if (!bd.isAbstract() && bd.isSingleton() && !bd.isLazyInit()) {
+				//处理factoryBean
+				// factoryBean需要了解下，其实没什么特殊的，就是一个实现了该接口的类而已，一般用来封装获取该类型对象的方法
 				if (isFactoryBean(beanName)) {
+					// FactoryBean 的话，在 beanName 前面加上 ‘&’ 符号(FACTORY_BEAN_PREFIX)。再调用 getBean，getBean 方法别急
 					Object bean = getBean(FACTORY_BEAN_PREFIX + beanName);
 					if (bean instanceof FactoryBean) {
 						FactoryBean<?> factory = (FactoryBean<?>) bean;
 						boolean isEagerInit;
+						//这些就忽略吧，直接看重点getBean
 						if (System.getSecurityManager() != null && factory instanceof SmartFactoryBean) {
 							isEagerInit = AccessController.doPrivileged(
 									(PrivilegedAction<Boolean>) ((SmartFactoryBean<?>) factory)::isEagerInit,
@@ -926,12 +931,15 @@ public class DefaultListableBeanFactory extends AbstractAutowireCapableBeanFacto
 					}
 				}
 				else {
+					// 普通的bean（即没继承FactoryBean接口的bean）， 该方法内部进行初始化
+					//这个方法我们经常用来从 BeanFactory 中获取一个 Bean，而初始化的过程也封装到了这个方法里。
 					getBean(beanName);
 				}
 			}
 		}
 
-		// Trigger post-initialization callback for all applicable beans...
+		//此时所有非懒加载的 单例bean已经初始化完成
+		// 如果我们定义的 bean 是实现了 SmartInitializingSingleton 接口的，那么在这里得到回调，忽略
 		for (String beanName : beanNames) {
 			Object singletonInstance = getSingleton(beanName);
 			if (singletonInstance instanceof SmartInitializingSingleton) {
