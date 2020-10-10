@@ -23,4 +23,8 @@ public class TestBean {
 	public MyConfig getMyConfig(){
 		return this.myConfig;
 	}
+
+	public void sayHello(){
+		System.out.println("hello C");
+	}
 }
